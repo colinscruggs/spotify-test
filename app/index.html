@@ -1,0 +1,104 @@
+<!doctype html>
+<html>
+  <head>
+    <title>Example of the Implicit Grant flow with Spotify</title>
+    <link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.1.1/css/bootstrap.min.css">
+    <style type="text/css">
+      #login, #loggedin {
+        display: none;
+      }
+      .text-overflow {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        width: 500px;
+      }
+    </style>
+        <script
+        src="https://code.jquery.com/jquery-3.2.1.min.js"
+        integrity="sha256-hwg4gsxgFZhOsEEamdOYGBf13FyQuiTwlAQgxVSNgt4="
+        crossorigin="anonymous"></script>
+      <script src="/script.js" defer></script>
+  </head>
+
+  <body>
+    <h1 class="text-salmon">Spotify Implicit Grant Template</h1>
+    <h3>This app uses the implicit grant authorization flow to authenticate users and get user data.</h3>
+    <p>
+      Here are your top artists on Spotify:
+      <ol id="top-artists"></ol>
+    </p>
+
+    <script>
+      // Get the hash of the url
+const hash = window.location.hash
+.substring(1)
+.split('&')
+.reduce(function (initial, item) {
+  if (item) {
+    var parts = item.split('=');
+    initial[parts[0]] = decodeURIComponent(parts[1]);
+  }
+  return initial;
+}, {});
+window.location.hash = '';
+
+// Set token
+let _token = hash.access_token;
+
+const authEndpoint = 'https://accounts.spotify.com/authorize';
+
+// Replace with your app's client ID, redirect URI and desired scopes
+const clientId = '16b80bb6a6604b0392a49028ddce5b60';
+const redirectUri = 'http://localhost:8888';
+const scopes = [
+  'user-top-read'
+];
+
+// If there is no token, redirect to Spotify authorization
+if (!_token) {
+  window.location = `${authEndpoint}?client_id=${clientId}&redirect_uri=${redirectUri}&scope=${scopes.join('%20')}&response_type=token&show_dialog=true`;
+}
+
+let topArtists = [];
+
+// Make a call using the token
+$.ajax({
+   url: "https://api.spotify.com/v1/me/top/artists",
+   type: "GET",
+   beforeSend: function(xhr){xhr.setRequestHeader('Authorization', 'Bearer ' + _token );},
+   success: function(data) { 
+     console.log(data.items);
+     // Do something with the returned data
+     data.items.map(function(artist) {
+       let item = $('<li>' + artist.name + '</li>');
+       item.appendTo($('#top-artists'));
+       topArtists.push(artist.id);
+     });
+   }
+});
+
+async 
+
+console.log(topArtists);
+
+let artistTopTrackMap = new Map();
+
+topArtists.forEach((artist) => {
+  let artistId = artist.id;
+  let artistName = artist.name;
+
+  $.ajax({
+  url:"https://api.spotify.com/v1/artists/{artistId}/top-tracks",
+  type: "GET",
+  beforeSend: function(xhr){xhr.setRequestHeader('Authorization', 'Bearer ' + _token );},
+  success: (data) => {
+    artistTopTrackMap.set(artistName, data);
+  }
+})
+})
+
+console.log(artistTopTrackMap);
+
+    </script>
+</html>
